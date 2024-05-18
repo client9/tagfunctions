@@ -2,7 +2,7 @@ package tagfunctions
 
 import (
 	"fmt"
-	"strings"`
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -18,7 +18,6 @@ type TagFunc func([]string, string) string
 // MakeTag creates a simple HTML tag with no attributes.
 //
 // TODO: why not pass through arguments?
-//
 func MakeTag(tag string) TagFunc {
 	return func(args []string, body string) string {
 		return fmt.Sprintf("<%s>%s</%s>", tag, strings.TrimSpace(body), tag)
