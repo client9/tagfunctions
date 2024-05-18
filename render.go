@@ -25,7 +25,7 @@ func MakeTag(tag string) TagFunc {
 }
 
 // MakeTagClass makes a HTML with a class attribute
-func makeTagClass(tag string, cz string) TagFunc {
+func MakeTagClass(tag string, cz string) TagFunc {
 	return func(args []string, body string) string {
 		return fmt.Sprintf("<%s class=%q>%s</%s>", tag, cz, strings.TrimSpace(body), tag)
 	}
