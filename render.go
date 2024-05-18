@@ -93,7 +93,7 @@ func Render(n *html.Node, fmap map[string]TagFunc) string {
 			body += Render(c, fmap)
 		}
 		if fn, ok := fmap[n.Data]; ok {
-			out := fn(toArgv(n), body)
+			out := fn(ToArgv(n), body)
 			return out
 		}
 		if IsHTMLTag(n.Data) {

@@ -36,11 +36,12 @@ func GetKeyValue(args []string, key string) (out string) {
 	return
 }
 
-// TODO: Not used.
+// ToArgv converts a Node's attributes into shell "argv" style.
+// Arg[0] is the name of the Node
+// Arg[1...] are the attributes converted to the string "key=value"
 //
-// Unix shell style argv.
-// argv[0] is name of the node, followed by arguments
-func toArgv(n *html.Node) []string {
+//	if a value is empty then it's just "key"
+func ToArgv(n *html.Node) []string {
 	argv := make([]string, len(n.Attr)+1)
 	argv[0] = n.Data
 	for i, attr := range n.Attr {
@@ -53,11 +54,8 @@ func toArgv(n *html.Node) []string {
 	return argv
 }
 
-// TODO: not used and looks incorrect
 // SetArg (by index)
-//
-// This looks incorrect
-func setArg(n *html.Node, i int, k string) {
+func SetArg(n *html.Node, i int, k string) {
 	i--
 	n.Attr[i].Key = k
 	n.Attr[i].Val = ""
