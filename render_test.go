@@ -17,7 +17,7 @@ func TestRedner(t *testing.T) {
 			return "<i>" + body + "</i>"
 		},
 		"p": func(argv []string, body string) string {
-			cname := getKeyValue(argv, "name")
+			cname := GetKeyValue(argv, "name")
 			return "<p class=" + cname + ">" + body + "</p>"
 		},
 		"echo": func(argv []string, body string) string {

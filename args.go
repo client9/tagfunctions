@@ -6,6 +6,9 @@ import (
 	"golang.org/x/net/html"
 )
 
+// Selector recursively selects all nodes that match a given function
+//
+// TODO: why is this in this file?
 func Selector(n *html.Node, fn func(*html.Node) bool) []*html.Node {
 	out := []*html.Node{}
 	if fn(n) {
@@ -17,8 +20,13 @@ func Selector(n *html.Node, fn func(*html.Node) bool) []*html.Node {
 	return out
 }
 
-// for shell style args
-func getKeyValue(args []string, key string) (out string) {
+// GetKeyValue for shell style args
+//
+// Given a list of arguments in a format of "key=value"
+// find the value that matches "key"
+//
+// This assume all keys do not or cannot have "=" in them.
+func GetKeyValue(args []string, key string) (out string) {
 	prefix := key + "="
 	for _, kv := range args[1:] {
 		if strings.HasPrefix(kv, prefix) {
@@ -28,6 +36,8 @@ func getKeyValue(args []string, key string) (out string) {
 	return
 }
 
+// TODO: Not used.
+//
 // Unix shell style argv.
 // argv[0] is name of the node, followed by arguments
 func toArgv(n *html.Node) []string {
@@ -43,14 +53,27 @@ func toArgv(n *html.Node) []string {
 	return argv
 }
 
+// TODO: not used and looks incorrect
+// SetArg (by index)
+//
+// This looks incorrect
 func setArg(n *html.Node, i int, k string) {
 	i--
 	n.Attr[i].Key = k
 	n.Attr[i].Val = ""
 }
 
-// no error checking cause that can be done a different way
-func getArg(n *html.Node, i int) (out string) {
+// GetArg (by index)
+//
+// 0 is Arg0, the name of the tag.
+// 1 is the first attribute
+//
+// If index is invalid, an empty string is returned.
+//
+// TODO: can attr[i].value exit in this system?
+//
+//	if so, why not reutrn key=value
+func GetArg(n *html.Node, i int) (out string) {
 	if i == 0 {
 		return n.Data
 	}
