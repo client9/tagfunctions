@@ -24,6 +24,17 @@ func MakeTag(tag string) TagFunc {
 	}
 }
 
+// ArgsToSimpleTag -- typically used in pass-through HTML like tags
+// Arguments are limited by a very small white list.
+//
+//	$p{...} --> <p>...</p>
+//	$p[id=main]{....} ---> <p id=main>...</p>
+//
+// TODO: allow id and class
+func ArgsToSimpleTag(args []string, body string) string {
+	return fmt.Sprintf("<%s>%s</%s>", args[0], body, args[0])
+}
+
 // MakeTagClass makes a HTML with a class attribute
 func MakeTagClass(tag string, cz string) TagFunc {
 	return func(args []string, body string) string {
@@ -31,22 +42,6 @@ func MakeTagClass(tag string, cz string) TagFunc {
 	}
 }
 
-func IsHTMLTag(tag string) bool {
-	// todo make map
-	switch tag {
-	case "sup":
-		return true
-	case "h1", "h2", "h3", "h4", "p", "b", "i", "em", "hr", "s":
-		return true
-	case "table", "tbody", "th", "tr", "td", "tfoot":
-		return true
-	case "blockquote", "pre":
-		return true
-	case "ul", "ol", "li":
-		return true
-	}
-	return false
-}
 func HTMLTag(n *html.Node, body string) string {
 	// hack for now
 	out := "<" + n.Data
@@ -95,9 +90,6 @@ func Render(n *html.Node, fmap map[string]TagFunc) string {
 		if fn, ok := fmap[n.Data]; ok {
 			out := fn(ToArgv(n), body)
 			return out
-		}
-		if IsHTMLTag(n.Data) {
-			return HTMLTag(n, body)
 		}
 		// unknown tag ... pass through
 		out := "$" + n.Data
