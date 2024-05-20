@@ -25,7 +25,17 @@ import (
 // paragraph.  This also means repeated runs of "\n" only make on paragraph
 //
 //	split.
+func isBlock(n *html.Node) bool {
+	if n.Type != html.ElementNode {
+		return false
+	}
+	switch n.Data {
+	case "p", "table", "blockquote", "pre":
+		return true
 
+	}
+	return false
+}
 func Paragrapher(n *html.Node) error {
 	if err := ParagrapherTag(n, "p"); err != nil {
 		return err
@@ -46,6 +56,22 @@ func ParagrapherTag(n *html.Node, tagName string) error {
 		}
 		current := block.FirstChild
 		for current != nil {
+			// generate case of <p> having block-level children (e.e. <p> outer <p> inner </p></p>
+			if isBlock(current) {
+				if p.FirstChild != nil {
+					block.Parent.InsertBefore(p, block)
+					p = &html.Node{
+						Type:     html.ElementNode,
+						DataAtom: tagAtom,
+						Data:     tagName,
+					}
+				}
+				next := current.NextSibling
+				block.RemoveChild(current)
+				block.Parent.InsertBefore(current, block)
+				current = next
+				continue
+			}
 			// if not text, remove and copy to next container
 			if current.Type != html.TextNode {
 				next := current.NextSibling

@@ -20,6 +20,9 @@ func TestParagraph(t *testing.T) {
 		{"$p{line 1   \n\n\n  line 2}", "<root><p>line 1</p><p>line 2</p></root>"},
 		{"$p{$b{line 1}\n\n$b{line 2}}", "<root><p><b>line 1</b></p><p><b>line 2</b></p></root>"},
 		{"$p{$b{bold}line1\n\n$b{line 2}}", "<root><p><b>bold</b>line1</p><p><b>line 2</b></p></root>"},
+
+		{"$p{outer $p{inner} ending}", "<root><p>outer </p><p>inner</p><p> ending</p></root>"},
+		{"$p{$pre{junk}outer}", "<root><pre>junk</pre><p>outer</p></root>"},
 	}
 	for num, tc := range tests {
 		p := Tokenizer{}
