@@ -23,6 +23,7 @@ func TestParagraph(t *testing.T) {
 
 		{"$p{outer $p{inner} ending}", "<root><p>outer </p><p>inner</p><p> ending</p></root>"},
 		{"$p{$pre{junk}outer}", "<root><pre>junk</pre><p>outer</p></root>"},
+		{"$p{$pre{junk}\n\n}", "<root><pre>junk</pre></root>"},
 	}
 	for num, tc := range tests {
 		p := Tokenizer{}

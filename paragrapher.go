@@ -99,18 +99,26 @@ func ParagrapherTag(n *html.Node, tagName string) error {
 				continue
 			}
 
-			// we are textnode and has a "\n\n"
-			p.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: strings.TrimSpace(current.Data[:idx]),
-			})
-			block.Parent.InsertBefore(p, block)
-			p = &html.Node{
-				Type:     html.ElementNode,
-				DataAtom: tagAtom,
-				Data:     tagName,
-			}
+			copyText := strings.TrimSpace(current.Data[:idx])
 			current.Data = strings.TrimSpace(current.Data[idx+2:])
+
+			// dont make empty text nodes
+			if len(copyText) != 0 {
+				// we are textnode and has a "\n\n"
+				p.AppendChild(&html.Node{
+					Type: html.TextNode,
+					Data: copyText,
+				})
+			}
+			// dont add empty <p></p>
+			if p.FirstChild != nil {
+				block.Parent.InsertBefore(p, block)
+				p = &html.Node{
+					Type:     html.ElementNode,
+					DataAtom: tagAtom,
+					Data:     tagName,
+				}
+			}
 		}
 
 		if p.FirstChild != nil {
