@@ -30,7 +30,7 @@ func isBlock(n *html.Node) bool {
 		return false
 	}
 	switch n.Data {
-	case "p", "table", "blockquote", "pre":
+	case "p", "table", "blockquote", "pre", "div":
 		return true
 
 	}
