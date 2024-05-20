@@ -25,8 +25,14 @@ import (
 // paragraph.  This also means repeated runs of "\n" only make on paragraph
 //
 //	split.
+
 func Paragrapher(n *html.Node) error {
-	tagName := "p"
+	if err := ParagrapherTag(n, "p"); err != nil {
+		return err
+	}
+	return ParagrapherTag(n, "blockquote")
+}
+func ParagrapherTag(n *html.Node, tagName string) error {
 	tagAtom := atom.Lookup([]byte(tagName))
 	blocks := Selector(n, func(n *html.Node) bool {
 		return n.Type == html.ElementNode && n.Data == tagName
