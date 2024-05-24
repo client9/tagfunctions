@@ -54,33 +54,26 @@ func ToArgv(n *html.Node) []string {
 	return argv
 }
 
-// SetArg (by index)
+// SetArg Set attribute argument by index
 func SetArg(n *html.Node, i int, k string) {
-	i--
 	n.Attr[i].Key = k
 	n.Attr[i].Val = ""
 }
 
-// GetArg (by index)
-//
-// 0 is Arg0, the name of the tag.
-// 1 is the first attribute
+// GetArg - get Attribute value by index.
 //
 // If index is invalid, an empty string is returned.
-//
-// TODO: can attr[i].value exit in this system?
-//
-//	if so, why not reutrn key=value
 func GetArg(n *html.Node, i int) (out string) {
-	if i == 0 {
-		return n.Data
-	}
-	i--
-
 	if i >= len(n.Attr) {
 		return
 	}
-	return n.Attr[i].Key
+	key := n.Attr[i].Key
+	val := n.Attr[i].Val
+	if val == "" {
+		// this should be the most common case
+		return key
+	}
+	return key + "=" + val
 }
 
 // linear search cause it's likely so short
