@@ -1,8 +1,6 @@
 package tagfunctions
 
 import (
-	"strings"
-
 	"golang.org/x/net/html"
 )
 
@@ -18,22 +16,6 @@ func Selector(n *html.Node, fn func(*html.Node) bool) []*html.Node {
 		out = append(out, Selector(c, fn)...)
 	}
 	return out
-}
-
-// GetKeyValue for Attributes
-//
-// Given a list of arguments in a format of "key=value"
-// find the value that matches "key"
-//
-// This assume all keys do not or cannot have "=" in them.
-func GetKeyValue(args []string, key string) (out string) {
-	prefix := key + "="
-	for _, kv := range args {
-		if strings.HasPrefix(kv, prefix) {
-			return kv[len(prefix):]
-		}
-	}
-	return
 }
 
 // ToArgs converts a Node's attributes into a list of arguments
@@ -76,7 +58,7 @@ func GetArg(n *html.Node, i int) (out string) {
 }
 
 // linear search cause it's likely so short
-func getKey(n *html.Node, key string) (out string) {
+func GetAttrKey(n *html.Node, key string) (out string) {
 	for _, attr := range n.Attr {
 		if attr.Key == key {
 			return attr.Val
