@@ -145,7 +145,7 @@ func Select(n *html.Node, tag string) string {
 
 // Transform changes ElementNode's name and attributes
 // children remain the same
-func TransformElement(n *html.Node, name string, attr ...string) {
+func TransformElement(n *html.Node, name string, attr ...string) *html.Node {
 	if n.Type != html.ElementNode {
 		panic("not an element node")
 	}
@@ -158,7 +158,7 @@ func TransformElement(n *html.Node, name string, attr ...string) {
 	n.Data = name
 	n.Attr = nil
 	if len(attr) == 0 {
-		return
+		return n
 	}
 	n.Attr = make([]html.Attribute, len(attr)/2)
 	j := 0
@@ -166,6 +166,7 @@ func TransformElement(n *html.Node, name string, attr ...string) {
 		n.Attr[j] = html.Attribute{Key: attr[i], Val: attr[i+1]}
 		j++
 	}
+	return n
 }
 
 func Execute(n *html.Node, fmap map[string]NodeFunc) error {
