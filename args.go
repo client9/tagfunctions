@@ -20,7 +20,7 @@ func Selector(n *html.Node, fn func(*html.Node) bool) []*html.Node {
 	return out
 }
 
-// GetKeyValue for shell style args
+// GetKeyValue for Attributes
 //
 // Given a list of arguments in a format of "key=value"
 // find the value that matches "key"
@@ -28,7 +28,7 @@ func Selector(n *html.Node, fn func(*html.Node) bool) []*html.Node {
 // This assume all keys do not or cannot have "=" in them.
 func GetKeyValue(args []string, key string) (out string) {
 	prefix := key + "="
-	for _, kv := range args[1:] {
+	for _, kv := range args {
 		if strings.HasPrefix(kv, prefix) {
 			return kv[len(prefix):]
 		}
@@ -36,19 +36,18 @@ func GetKeyValue(args []string, key string) (out string) {
 	return
 }
 
-// ToArgv converts a Node's attributes into shell "argv" style.
-// Arg[0] is the name of the Node
-// Arg[1...] are the attributes converted to the string "key=value"
+// ToArgs converts a Node's attributes into a list of arguments
 //
-//	if a value is empty then it's just "key"
-func ToArgv(n *html.Node) []string {
-	argv := make([]string, len(n.Attr)+1)
-	argv[0] = n.Data
+// if a value is empty then it's just "key"
+func ToArgs(n *html.Node) []string {
+	if len(n.Attr) == 0 {
+		return nil
+	}
+	argv := make([]string, len(n.Attr))
 	for i, attr := range n.Attr {
-		j := i + 1
-		argv[j] = attr.Key
+		argv[i] = attr.Key
 		if attr.Val != "" {
-			argv[j] += "=" + attr.Val
+			argv[i] += "=" + attr.Val
 		}
 	}
 	return argv
