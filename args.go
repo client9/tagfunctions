@@ -57,8 +57,8 @@ func GetArg(n *html.Node, i int) (out string) {
 	return key + "=" + val
 }
 
-// linear search cause it's likely so short
-func GetAttrKey(n *html.Node, key string) (out string) {
+// GetAttr - Get Attribute by key
+func GetAttr(n *html.Node, key string) (out string) {
 	for _, attr := range n.Attr {
 		if attr.Key == key {
 			return attr.Val

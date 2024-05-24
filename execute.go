@@ -20,6 +20,48 @@ func Generate(src string, fmap map[string]NodeFunc) (string, error) {
 	return s.String(), nil
 }
 
+// Append adds the child to the parent and returns the parent
+// helper to do function chaining
+func Append(parent *html.Node, children ...*html.Node) *html.Node {
+	for _, child := range children {
+		parent.AppendChild(child)
+	}
+	return parent
+}
+
+// Replace
+func Replace(dst, src *html.Node) *html.Node {
+	parent := src.Parent
+	if parent == nil {
+		// probably an error
+		return dst
+	}
+	parent.InsertBefore(dst, src)
+	parent.RemoveChild(src)
+	return dst
+}
+
+// RemoveChildren removes all child nodes and returns itself
+func RemoveChildren(n *html.Node) *html.Node {
+	for n.FirstChild != nil {
+		n.RemoveChild(n.FirstChild)
+	}
+	return n
+}
+
+// Reparent moves children from src to dst, and returns dst
+func Reparent(dst, src *html.Node) *html.Node {
+	for {
+		child := src.FirstChild
+		if child == nil {
+			break
+		}
+		src.RemoveChild(child)
+		dst.AppendChild(child)
+	}
+	return dst
+}
+
 func NewElement(name string, kv ...string) *html.Node {
 	// TODO ATOMS
 
