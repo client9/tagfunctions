@@ -3,6 +3,8 @@ package tagfunctions
 import (
 	"encoding/csv"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 // NewCsvTableHTML takes an embedded CSV and converts to an HTML table.
@@ -19,68 +21,75 @@ import (
 // fn("wrap", 0, 0)
 //
 // if non-empty will wrap the table in a <div class="xxx">
-func NewCsvTableHTML(formatter func(string, int, int) string) TagFunc {
+func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 	if formatter == nil {
 		formatter = func(string, int, int) string { return "" }
 	}
-	makeTableTag := func(name string, row int, col int) string {
+	makeTableTag := func(name string, row int, col int) *html.Node {
 		cz := formatter(name, row, col)
 		if cz != "" {
-			// TODO: escape attribute value
-			cz = " class='" + cz + "'"
+			return NewElement(name, "class", cz)
 		}
-		return "<" + name + cz + ">"
+		return NewElement(name)
 	}
 
-	return func(args []string, body string) string {
-		out := strings.Builder{}
+	return func(n *html.Node) error {
+		body := n.FirstChild.Data
 
-		wrap := formatter("wrapper", 0, 0)
-		if wrap != "" {
-			// TODO: escape wrap
-			out.WriteString("<div class=" + wrap + ">")
-		}
-		out.WriteString(makeTableTag("table", 0, 0))
+		table := makeTableTag("table", 0, 0)
 		r := csv.NewReader(strings.NewReader(body))
 
 		/* optional caption that probably needs work */
-		caption := strings.Join(args[1:], " ")
-		if caption != "" {
-			out.WriteString(makeTableTag("caption", 0, 0))
-			out.WriteString(caption)
-			out.WriteString("</caption>")
-		}
+		/*
+			caption := strings.Join(args[1:], " ")
+			if caption != "" {
+				captionElement := makeTableTag("caption", 0, 0)
+				captionElement.AppendChild(NewText(caption))
+				table.AppendChild(captionElement)
+			}
+		*/
 		// read header row
 		i := 0
 		row, _ := r.Read()
-		out.WriteString(makeTableTag("thead", 0, 0))
-		out.WriteString(makeTableTag("tr", i, 0))
+		thead := makeTableTag("thead", 0, 0)
+		tr := makeTableTag("tr", i, 0)
+		table.AppendChild(thead)
+		thead.AppendChild(tr)
 		for j, col := range row {
-			out.WriteString(makeTableTag("th", i, j))
-			out.WriteString(col)
-			out.WriteString("</th>")
+			th := makeTableTag("th", i, j)
+			th.AppendChild(NewText(col))
+			thead.AppendChild(th)
 		}
-		out.WriteString("</tr></thead>\n")
-		out.WriteString(makeTableTag("tbody", 0, 0))
+		tbody := makeTableTag("tbody", 0, 0)
+		table.AppendChild(tbody)
+
 		for {
 			i += 1
 			row, err := r.Read()
 			if err != nil {
 				break
 			}
-			out.WriteString(makeTableTag("tr", i, 0))
+			tr = makeTableTag("tr", i, 0)
+			tbody.AppendChild(tr)
 			for j, col := range row {
-				out.WriteString(makeTableTag("td", i, j))
-				out.WriteString(col)
-				out.WriteString("</td>")
+				td := makeTableTag("td", i, j)
+				td.AppendChild(NewText(col))
+				tr.AppendChild(td)
 			}
-			out.WriteString("</tr>\n")
 		}
-		out.WriteString("</tbody>")
-		out.WriteString("</table>")
+
+		// table is complete.  Link it in.
+		// maybe wrap it
+		wrap := formatter("wrapper", 0, 0)
 		if wrap != "" {
-			out.WriteString("</div>")
+			tmp := NewElement("div", "class", "wrap")
+			tmp.AppendChild(table)
+			table = tmp
 		}
-		return out.String()
+
+		// Replace node
+		n.Parent.InsertBefore(table, n)
+		n.Parent.RemoveChild(n)
+		return nil
 	}
 }

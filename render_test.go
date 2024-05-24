@@ -5,26 +5,7 @@ import (
 	"testing"
 )
 
-func TestRedner(t *testing.T) {
-	fmap := map[string]TagFunc{
-		"root": func(argv []string, body string) string {
-			return body
-		},
-		"b": func(argv []string, body string) string {
-			return "<b>" + body + "</b>"
-		},
-		"i": func(argv []string, body string) string {
-			return "<i>" + body + "</i>"
-		},
-		"p": func(argv []string, body string) string {
-			cname := GetKeyValue(argv, "name")
-			return "<p class=" + cname + ">" + body + "</p>"
-		},
-		"echo": func(argv []string, body string) string {
-			return "<echo>" + strings.Join(argv[1:], " ") + "</echo>"
-		},
-	}
-
+func TestRender(t *testing.T) {
 	type test struct {
 		input string
 		want  string
@@ -34,15 +15,31 @@ func TestRedner(t *testing.T) {
 		{"", ""},
 		{"$b{bold} text", "<b>bold</b> text"},
 		{"$b{bold $i{italic} text}", "<b>bold <i>italic</i> text</b>"},
-		{"$p[name=text]{body}", "<p class=text>body</p>"},
-		{"$echo[1 2 3 4]", "<echo>1 2 3 4</echo>"},
+		{"$p[class=text]{body}", `<p class="text">body</p>`},
+		{"$echo[1 2 3 4]", `<echo 1="" 2="" 3="" 4=""></echo>`},
 	}
 	for i, tc := range tests {
+
+		// parse
 		p := Tokenizer{}
 		node := p.Parse(strings.NewReader(tc.input))
-		got := Render(node, fmap)
-		if got != tc.want {
-			t.Fatalf("case %d: expected: %v, got %v", i, tc.want, got)
+
+		// test that is renders back to original
+		sb := strings.Builder{}
+		Render(&sb, node)
+		got := sb.String()
+		want := "$root{" + tc.input + "}"
+		if got != want {
+			t.Errorf("case %d: expected: %v, got %v", i, want, got)
+		}
+
+		// test HTML rendering
+		sb.Reset()
+		RenderHTML(&sb, node)
+		got = sb.String()
+		want = "<root>" + tc.want + "</root>"
+		if got != want {
+			t.Errorf("case %d: expected: %v, got %v", i, want, got)
 		}
 	}
 }

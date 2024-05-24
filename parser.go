@@ -3,9 +3,23 @@ package tagfunctions
 import (
 	"io"
 	"log"
+	"strings"
 
 	"golang.org/x/net/html"
 )
+
+func argToAttribute(arg string) html.Attribute {
+	key := arg
+	val := ""
+	if idx := strings.IndexByte(arg, '='); idx != -1 {
+		key = arg[:idx]
+		val = arg[idx+1:]
+	}
+	return html.Attribute{
+		Key: key,
+		Val: val,
+	}
+}
 
 type Tokenizer struct {
 	r         io.ByteScanner
@@ -186,21 +200,26 @@ func (z *Tokenizer) stateBeforeAttributeName(n *html.Node) {
 		case ']':
 			// $foo[]....
 			//
+			if len(z.maybeText) > 0 {
+				n.Attr = append(n.Attr, argToAttribute(string(z.maybeText)))
+				z.maybeText = nil
+			}
 			z.stateAfterAttributes(n)
 			return
 		case '\'':
+			z.maybeText = nil
 			z.stateAttributeNameQuote1(n)
 		case '"':
+			z.maybeText = nil
 			z.stateAttributeNameQuote2(n)
 		default:
-			z.unreadByte()
+			z.maybeText = []byte{c}
 			z.stateAttributeName(n)
 		}
 	}
 }
 
 func (z *Tokenizer) stateAttributeNameQuote1(n *html.Node) {
-	key := []byte{}
 	for {
 		c, err := z.readByte()
 		if err != nil {
@@ -210,16 +229,13 @@ func (z *Tokenizer) stateAttributeNameQuote1(n *html.Node) {
 
 		switch c {
 		case '\'':
-			n.Attr = append(n.Attr, html.Attribute{Key: string(key)})
-			z.stateAfterAttributeValueQuoted()
 			return
 		default:
-			key = append(key, c)
+			z.maybeText = append(z.maybeText, c)
 		}
 	}
 }
 func (z *Tokenizer) stateAttributeNameQuote2(n *html.Node) {
-	key := []byte{}
 	for {
 		c, err := z.readByte()
 		if err != nil {
@@ -229,17 +245,14 @@ func (z *Tokenizer) stateAttributeNameQuote2(n *html.Node) {
 
 		switch c {
 		case '"':
-			n.Attr = append(n.Attr, html.Attribute{Key: string(key)})
-			z.stateAfterAttributeValueQuoted()
 			return
 		default:
-			key = append(key, c)
+			z.maybeText = append(z.maybeText, c)
 		}
 	}
 }
 
 func (z *Tokenizer) stateAttributeName(n *html.Node) {
-	key := []byte{}
 	for {
 		c, err := z.readByte()
 		if err != nil {
@@ -250,99 +263,24 @@ func (z *Tokenizer) stateAttributeName(n *html.Node) {
 		switch c {
 		case ' ', '\t', '\f', '\r', '\n':
 			// $foo[xxxi<sp>
-			n.Attr = append(n.Attr, html.Attribute{Key: string(key)})
+			n.Attr = append(n.Attr, argToAttribute(string(z.maybeText)))
+			z.maybeText = nil
 			return
+		case '\'':
+			z.stateAttributeNameQuote1(n)
+		case '"':
+			z.stateAttributeNameQuote2(n)
 		case ']':
 			// $foo[]....
 			//
-			n.Attr = append(n.Attr, html.Attribute{Key: string(key)})
+			if len(z.maybeText) > 0 {
+				n.Attr = append(n.Attr, argToAttribute(string(z.maybeText)))
+			}
+			z.maybeText = nil
 			z.unreadByte()
 			return
-		case '=':
-			z.stateBeforeAttributeValue(n, string(key))
-			return
 		default:
-			key = append(key, c)
-		}
-	}
-}
-
-// stateBeforeAttributeValue
-// https://html.spec.whatwg.org/#before-attribute-value-state
-//
-//	key=value or key= value key="value"  key='value'
-func (z *Tokenizer) stateBeforeAttributeValue(n *html.Node, key string) {
-	for {
-		c, err := z.readByte()
-		if err != nil {
-			// ERROR
-			return
-		}
-
-		switch c {
-		case ' ', '\t', '\f', '\r', '\n':
-			continue
-		case '\'':
-			z.stateAttributeValueQuote1(n, key)
-			return
-		case '"':
-			z.stateAttributeValueQuote2(n, key)
-			return
-		case ']':
-			// key=]
-			// TBD
-		default:
-			z.unreadByte()
-			z.stateAttributeValue(n, key)
-			return
-		}
-	}
-}
-
-// state Attribute Value, Single Quoted
-// https://html.spec.whatwg.org/#attribute-value-(single-quoted)-state
-func (z *Tokenizer) stateAttributeValueQuote1(n *html.Node, key string) {
-	val := []byte{}
-
-	for {
-		c, err := z.readByte()
-		if err != nil {
-			// ERROR
-			return
-		}
-
-		switch c {
-		case '\'':
-			a := html.Attribute{Key: key, Val: string(val)}
-			n.Attr = append(n.Attr, a)
-			z.stateAfterAttributeValueQuoted()
-			return
-		default:
-			val = append(val, c)
-		}
-	}
-}
-
-// state Attribute Value, Double Quoted
-// https://html.spec.whatwg.org/#attribute-value-(double-quoted)-state
-func (z *Tokenizer) stateAttributeValueQuote2(n *html.Node, key string) {
-	val := []byte{}
-
-	for {
-		c, err := z.readByte()
-		if err != nil {
-			// ERROR
-			return
-		}
-
-		switch c {
-		case '"':
-			a := html.Attribute{Key: key, Val: string(val)}
-			n.Attr = append(n.Attr, a)
-			z.stateAfterAttributeValueQuoted()
-			return
-		default:
-			val = append(val, c)
+			z.maybeText = append(z.maybeText, c)
 		}
 	}
 }
@@ -367,41 +305,6 @@ func (z *Tokenizer) stateAfterAttributeValueQuoted() {
 	}
 }
 
-func (z *Tokenizer) stateAttributeValue(n *html.Node, key string) {
-	val := []byte{}
-	for {
-		c, err := z.readByte()
-		if err != nil {
-			// ERROR
-			return
-		}
-
-		switch c {
-		case ' ', '\t', '\f', '\r', '\n':
-			n.Attr = append(n.Attr, html.Attribute{Key: key, Val: string(val)})
-			return
-		case ']':
-			n.Attr = append(n.Attr, html.Attribute{Key: key, Val: string(val)})
-			z.unreadByte()
-			return
-		case '\'':
-			// note quite right
-			// this is the case of
-			//  key=foo'bar'
-			z.stateAttributeValueQuote1(n, key)
-			return
-		case '"':
-			// not quite right
-			// this is the case of
-			//   key=foo"bar"
-			//
-			z.stateAttributeValueQuote2(n, key)
-			return
-		default:
-			val = append(val, c)
-		}
-	}
-}
 func (z *Tokenizer) stateAfterAttributes(n *html.Node) {
 	z.current.AppendChild(n)
 

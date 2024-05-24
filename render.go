@@ -1,125 +1,113 @@
 package tagfunctions
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"golang.org/x/net/html"
 )
 
-// takes a HTML-node tree and renders it using user functions.
-// some node might be "pass through" (i.e. just render back to HTML).
-//
-// could be cleaned up but this is mostly simple and mostly happy with it.
-//
-
-type TagFunc func([]string, string) string
-
-// MakeTag creates a simple HTML tag with no attributes.
-func MakeTag(tag string) TagFunc {
-	return func(args []string, body string) string {
-		return fmt.Sprintf("<%s>%s</%s>", tag, strings.TrimSpace(body), tag)
-	}
+// Render AST into HTML
+func RenderHTML(w io.Writer, n *html.Node) error {
+	// not much to do here!
+	return html.Render(w, n)
 }
 
-// MakeTagClass makes a HTML with a class attribute
-func MakeTagClass(tag string, cz string) TagFunc {
-	return func(args []string, body string) string {
-		return fmt.Sprintf("<%s class=%q>%s</%s>", tag, cz, strings.TrimSpace(body), tag)
-	}
+// hack used in many places in go
+type writer interface {
+	io.Writer
+	io.ByteWriter
+	WriteString(string) (int, error)
 }
 
-// ArgsToSimpleTag -- typically used in pass-through HTML like tags
-// Arguments are limited by a very small white list.
+// Render AST back into parseble string
 //
-//	$p{...} --> <p>...</p>
-//	$p[id=main]{....} ---> <p id=main>...</p>
-//
-// TODO: allow id and class
-func ArgsToSimpleTag(args []string, body string) string {
-	return fmt.Sprintf("<%s>%s</%s>", args[0], body, args[0])
+//	i.e. $root{....}
+func Render(w io.Writer, n *html.Node) error {
+
+	// hack used many places in golang
+	// if the Writer is say... StringWriter
+	// then nothing to do..
+	// othewise wrap it in a bufio.Writer
+	//
+	if x, ok := w.(writer); ok {
+		return render1(x, n)
+	}
+	buf := bufio.NewWriter(w)
+	if err := render1(buf, n); err != nil {
+		return err
+	}
+	return buf.Flush()
 }
 
-func HTMLTag(n *html.Node, body string) string {
-	// hack for now
-	out := "<" + n.Data
-	for _, a := range n.Attr {
-		out += " " + a.Key + "=" + fmt.Sprintf("%q", a.Val)
-	}
-	out += fmt.Sprintf(">%s</%s>", body, n.Data)
-	return out
-}
+// render attribute
+// while are reusing the html.Node and html.Attribute
+// the attributes here have no HTML restrictions.
+func renderAttr(attr html.Attribute) string {
+	k := attr.Key
+	v := attr.Val
 
-func RenderFunc(fmap map[string]TagFunc) func(n *html.Node) string {
-	return func(n *html.Node) string {
-		return Render(n, fmap)
-	}
-}
+	simpleKey := !strings.ContainsAny(k, "\n\r '\"")
+	simpleValue := !strings.ContainsAny(v, "\n\r '\"")
 
-// "select title" --
-//
-//	  only returns text children
-//	Could be improved.
-func Select(n *html.Node, tag string) string {
-	blocks := Selector(n, func(n *html.Node) bool {
-		return n.Type == html.ElementNode && n.Data == tag
-	})
-	if len(blocks) == 0 {
-		return "nope"
-	}
-	body := ""
-	for c := blocks[0].FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.TextNode {
-			body += c.Data
+	// key
+	// key=value
+	// key="value"
+	if simpleKey {
+		if v == "" {
+			return k
 		}
+		if simpleValue {
+			return k + "=" + v
+		}
+		return fmt.Sprintf("%s=%q", k, v)
 	}
-	return body
+	// key is value (ok)
+	if v == "" {
+		return fmt.Sprintf("%q", k)
+	}
+	// this case should never happen but it's ok.
+	return fmt.Sprintf("%q", k+"="+v)
 }
 
-func Render(n *html.Node, fmap map[string]TagFunc) string {
+func render1(w writer, n *html.Node) error {
+	// Render non-element nodes; these are the easy cases.
 	switch n.Type {
+	case html.ErrorNode:
+		return errors.New("render: an ErrorNode node")
 	case html.TextNode:
-		return n.Data
+		_, err := w.WriteString(n.Data)
+		return err
 	case html.ElementNode:
-		body := ""
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			body += Render(c, fmap)
-		}
-		if fn, ok := fmap[n.Data]; ok {
-			out := fn(ToArgv(n), body)
-			return out
-		}
-		// unknown tag ... pass through
-		out := "$" + n.Data
-		if len(n.Attr) > 0 {
-			out += "["
-			htmlargs := []string{}
-			for _, arg := range n.Attr {
-				if len(arg.Val) == 0 {
-					// TODO: better quoting
-					if strings.Contains(arg.Key, " ") {
-						htmlargs = append(htmlargs, fmt.Sprintf("%q", arg.Key))
-						continue
-					}
-					htmlargs = append(htmlargs, arg.Key)
-					continue
-				}
-				// TODO: better quoting
-				if strings.Contains(arg.Val, " ") {
-					htmlargs = append(htmlargs, fmt.Sprintf("%s=%q", arg.Key, arg.Val))
-					continue
-				}
-				htmlargs = append(htmlargs, arg.Key+"="+arg.Val)
-			}
-			out += strings.Join(htmlargs, " ")
-			out += "]"
-		}
-		body = strings.TrimSpace(body)
-		if len(body) > 0 {
-			out += "{" + body + "}"
-		}
-		return "<code>" + out + "</code>"
+		//NOP
 	default:
-		panic("unknown node type")
+		return errors.New("render: unknown node type")
 	}
+
+	w.WriteByte('$')
+	w.WriteString(n.Data)
+	if len(n.Attr) > 0 {
+		args := make([]string, len(n.Attr))
+		for i, a := range n.Attr {
+			args[i] = renderAttr(a)
+		}
+		w.WriteString("[" + strings.Join(args, " ") + "]")
+
+		// no children?  We are done
+		if n.FirstChild == nil {
+			return nil
+		}
+	}
+
+	// render children
+	w.WriteByte('{')
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if err := render1(w, c); err != nil {
+			return err
+		}
+	}
+	return w.WriteByte('}')
 }
