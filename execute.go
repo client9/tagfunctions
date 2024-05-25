@@ -169,6 +169,25 @@ func TransformElement(n *html.Node, name string, attr ...string) *html.Node {
 	return n
 }
 
+func TextContent(n *html.Node) string {
+	if n.Type == html.TextNode {
+		return n.Data
+	}
+
+	out := ""
+	for n = n.FirstChild; n != nil; n = n.NextSibling {
+		switch n.Type {
+		case html.TextNode:
+			out += TextContent(n)
+		case html.ElementNode:
+			out += TextContent(n)
+		default:
+			// NOP
+		}
+	}
+	return out
+}
+
 func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 	switch n.Type {
 	case html.TextNode:
