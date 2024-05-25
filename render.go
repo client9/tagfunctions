@@ -10,6 +10,16 @@ import (
 	"golang.org/x/net/html"
 )
 
+func RenderStringFunc(render func(io.Writer, *html.Node) error) func(n *html.Node) (string, error) {
+	return func(n *html.Node) (string, error) {
+		buf := &strings.Builder{}
+		if err := render(buf, n); err != nil {
+			return "", err
+		}
+		return buf.String(), nil
+	}
+}
+
 // Render AST into HTML
 func RenderHTML(w io.Writer, n *html.Node) error {
 	// not much to do here!
