@@ -188,6 +188,12 @@ func TextContent(n *html.Node) string {
 	return out
 }
 
+func ExecuteFunc(m map[string]NodeFunc) NodeFunc {
+	return func(n *html.Node) error {
+		return Execute(n, m)
+	}
+}
+
 func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 	switch n.Type {
 	case html.TextNode:
