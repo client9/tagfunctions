@@ -291,7 +291,7 @@ func (z *Tokenizer) stateAttributeName(n *html.Node) {
 func (z *Tokenizer) stateAfterAttributeValueQuoted() {
 	c, err := z.readByte()
 	if err != nil {
-		panic "stateAfterAttributeValueQuoted ran out of room"	
+		panic("stateAfterAttributeValueQuoted ran out of room")
 		return
 	}
 
