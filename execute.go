@@ -1,6 +1,7 @@
 package tagfunctions
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -61,6 +62,9 @@ func RemoveChildren(n *html.Node) *html.Node {
 
 // Reparent moves children from src to dst, and returns dst
 func Reparent(dst, src *html.Node) *html.Node {
+	if dst == src {
+		panic(fmt.Errorf("Repart: same nodes %s", dst.Data))
+	}
 	for {
 		child := src.FirstChild
 		if child == nil {
