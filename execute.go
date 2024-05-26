@@ -38,8 +38,9 @@ func Replace(dst, src *html.Node) *html.Node {
 	// move children over
 	Reparent(dst, src)
 
-	// move Attr
-	dst.Attr = src.Attr
+	// copy attributes
+	dst.Attr = make([]html.Attribute, len(src.Attr))
+	copy(dst.Attr, src.Attr)
 
 	// copy basics
 	dst.Type = src.Type
