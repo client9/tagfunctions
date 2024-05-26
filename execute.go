@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 // Execute parses and renders a tag string
@@ -155,6 +156,7 @@ func TransformElement(n *html.Node, name string, attr ...string) *html.Node {
 	if len(attr)&1 == 1 {
 		panic("odd number of args given")
 	}
+	n.DataAtom = atom.Lookup([]byte(name))
 	n.Data = name
 	n.Attr = nil
 	if len(attr) == 0 {
