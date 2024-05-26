@@ -32,13 +32,23 @@ func Append(parent *html.Node, children ...*html.Node) *html.Node {
 
 // Replace
 func Replace(dst, src *html.Node) *html.Node {
-	parent := src.Parent
-	if parent == nil {
-		// probably an error
-		return dst
+
+	// remove all children on dst
+	for c := dst.FirstChild; c != nil; c = c.NextSibling {
+		dst.RemoveChild(c)
 	}
-	parent.InsertBefore(dst, src)
-	parent.RemoveChild(src)
+
+	// move children over
+	Reparent(dst, src)
+
+	// move Attr
+	dst.Attr = src.Attr
+
+	// copy basics
+	dst.Type = src.Type
+	dst.Data = src.Data
+	dst.DataAtom = src.DataAtom
+
 	return dst
 }
 
@@ -210,6 +220,7 @@ func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 		if fn, ok := fmap[n.Data]; ok {
 			return fn(n)
 		}
+		//
 	default:
 		panic("unknown node type")
 	}
