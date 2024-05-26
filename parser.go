@@ -190,6 +190,7 @@ func (z *Tokenizer) stateBeforeAttributeName(n *html.Node) {
 	for {
 		c, err := z.readByte()
 		if err != nil {
+			panic("stateBeforeAttributeName ran out of room")
 			// TBD on what to do here
 			return
 		}
@@ -223,6 +224,7 @@ func (z *Tokenizer) stateAttributeNameQuote1(n *html.Node) {
 	for {
 		c, err := z.readByte()
 		if err != nil {
+			panic("stateAttributeNameQuote1 ran out of room")
 			// TBD on what to do here
 			return
 		}
@@ -239,7 +241,7 @@ func (z *Tokenizer) stateAttributeNameQuote2(n *html.Node) {
 	for {
 		c, err := z.readByte()
 		if err != nil {
-			// TBD on what to do here
+			panic("stateAttributeNameQuote2 ran out of room")
 			return
 		}
 
@@ -256,6 +258,7 @@ func (z *Tokenizer) stateAttributeName(n *html.Node) {
 	for {
 		c, err := z.readByte()
 		if err != nil {
+			panic("stateAttributeName ran out of room")
 			// TBD on what to do here
 			return
 		}
@@ -288,7 +291,7 @@ func (z *Tokenizer) stateAttributeName(n *html.Node) {
 func (z *Tokenizer) stateAfterAttributeValueQuoted() {
 	c, err := z.readByte()
 	if err != nil {
-		// ERRROR
+		panic "stateAfterAttributeValueQuoted ran out of room"	
 		return
 	}
 
