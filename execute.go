@@ -33,10 +33,7 @@ func Append(parent *html.Node, children ...*html.Node) *html.Node {
 // Replace
 func Replace(dst, src *html.Node) *html.Node {
 
-	// remove all children on dst
-	for c := dst.FirstChild; c != nil; c = c.NextSibling {
-		dst.RemoveChild(c)
-	}
+	RemoveChildren(dst)
 
 	// move children over
 	Reparent(dst, src)
