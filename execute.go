@@ -111,7 +111,7 @@ type NodeFunc func(n *html.Node) error
 // - Children are preserved
 func MakeTag(tag string) NodeFunc {
 	return func(n *html.Node) error {
-		TransformElement(n, "p")
+		TransformElement(n, tag)
 		return nil
 	}
 }
