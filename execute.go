@@ -1,6 +1,7 @@
 package tagfunctions
 
 import (
+	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -215,6 +216,7 @@ func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 				return err
 			}
 		}
+		log.Printf("NODE: %s", n.Data)
 		if fn, ok := fmap[n.Data]; ok {
 			return fn(n)
 		}
