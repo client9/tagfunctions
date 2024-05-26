@@ -1,6 +1,7 @@
 package tagfunctions
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"strings"
@@ -190,7 +191,8 @@ func (z *Tokenizer) stateBeforeAttributeName(n *html.Node) {
 	for {
 		c, err := z.readByte()
 		if err != nil {
-			panic("stateBeforeAttributeName ran out of room")
+
+			panic(fmt.Errorf("stateBeforeAttributeName ran out of room in node %s", n.Data))
 			// TBD on what to do here
 			return
 		}
@@ -224,7 +226,7 @@ func (z *Tokenizer) stateAttributeNameQuote1(n *html.Node) {
 	for {
 		c, err := z.readByte()
 		if err != nil {
-			panic("stateAttributeNameQuote1 ran out of room")
+			panic(fmt.Errorf("stateAttributeNameQuote1 ran out of room in node %s", n.Data))
 			// TBD on what to do here
 			return
 		}
@@ -241,7 +243,7 @@ func (z *Tokenizer) stateAttributeNameQuote2(n *html.Node) {
 	for {
 		c, err := z.readByte()
 		if err != nil {
-			panic("stateAttributeNameQuote2 ran out of room")
+			panic(fmt.Errorf("stateAttributeNameQuote2 ran out of room in node %s", n.Data))
 			return
 		}
 
