@@ -201,7 +201,9 @@ func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 		return nil
 	case html.ElementNode:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			Execute(c, fmap)
+			if err := Execute(c, fmap); err != nil {
+				return err
+			}
 		}
 		if fn, ok := fmap[n.Data]; ok {
 			return fn(n)
