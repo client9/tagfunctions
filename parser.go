@@ -233,6 +233,8 @@ func (z *Tokenizer) stateAttributeNameQuote1(n *html.Node) {
 
 		switch c {
 		case '\'':
+			n.Attr = append(n.Attr, argToAttribute(string(z.maybeText)))
+			z.maybeText = nil
 			return
 		default:
 			z.maybeText = append(z.maybeText, c)
@@ -249,6 +251,8 @@ func (z *Tokenizer) stateAttributeNameQuote2(n *html.Node) {
 
 		switch c {
 		case '"':
+			n.Attr = append(n.Attr, argToAttribute(string(z.maybeText)))
+			z.maybeText = nil
 			return
 		default:
 			z.maybeText = append(z.maybeText, c)

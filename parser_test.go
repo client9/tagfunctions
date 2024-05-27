@@ -45,6 +45,8 @@ func TestMacro2(t *testing.T) {
 		{`$b[class='mega']{bold}`, `$root{$b[class=mega]{bold}}`},
 		{`$b[class='mega bold']{bold}`, `$root{$b[class="mega bold"]{bold}}`},
 		{`$b[class="mega bold"]{bold}`, `$root{$b[class="mega bold"]{bold}}`},
+		{`$b["1" "2" "3"]`, `$root{$b[1 2 3]}`},
+		{`$b['1' '2' '3']`, `$root{$b[1 2 3]}`},
 
 		// what happens when arg is quoted?  Rendering isn't 'correct' since attr key value
 		// is actually invalid.
