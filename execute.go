@@ -2,7 +2,6 @@ package tagfunctions
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -28,6 +27,16 @@ func Generate(src string, fmap map[string]NodeFunc) (string, error) {
 func Append(parent *html.Node, children ...*html.Node) *html.Node {
 	for _, child := range children {
 		parent.AppendChild(child)
+	}
+	return parent
+}
+
+func InsertBefore(parent *html.Node, children ...*html.Node) *html.Node {
+	if len(children) == 0 {
+		return parent
+	}
+	for i := len(children) - 1; i >= 0; i-- {
+		parent.InsertBefore(children[i], parent.FirstChild)
 	}
 	return parent
 }
@@ -129,14 +138,6 @@ func MakeTagClass(tag string, cz string) NodeFunc {
 	}
 }
 
-/*
-func RenderFunc(fmap map[string]NodeFunc) func(n *html.Node) string {
-	return func(n *html.Node) string {
-		return Execute(n, fmap)
-	}
-}
-*/
-
 // "select title" --
 //
 //	only returns text children
@@ -220,7 +221,6 @@ func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 				return err
 			}
 		}
-		log.Printf("NODE: %s", n.Data)
 		if fn, ok := fmap[n.Data]; ok {
 			return fn(n)
 		}
