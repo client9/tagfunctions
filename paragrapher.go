@@ -24,21 +24,10 @@ import (
 // paragraph.  This also means repeated runs of "\n" only make on paragraph
 //
 //	split.
-func isBlock(n *html.Node) bool {
-	if n.Type != html.ElementNode {
-		return false
-	}
-	switch n.Data {
-	case "p", "table", "blockquote", "pre", "div":
-		return true
-
-	}
-	return false
-}
 
 type Paragrapher struct {
-	Tags   []string // elements to split on "\n\n" to generate new blocks
-	Blocks []string // elements that are considered to be blocks
+	Tag      string // elements to split on "\n\n" to generate new blocks
+	IsInline func(*html.Node) bool
 }
 
 func (p *Paragrapher) Execute(n *html.Node) error {
@@ -46,39 +35,68 @@ func (p *Paragrapher) Execute(n *html.Node) error {
 	//
 	// Set defaults
 	//
-	if len(p.Tags) == 0 {
-		p.Tags = []string{"p"}
+	if p.Tag == "" {
+		p.Tag = "p"
 	}
-	if len(p.Blocks) == 0 {
-		p.Blocks = []string{"p", "blockquote"}
+	if p.IsInline == nil {
+		p.IsInline = inlineNode
 	}
 
-	for _, tag := range p.Tags {
-		if err := p.executeTag(n, tag); err != nil {
-			return err
-		}
+	if err := p.executeTag(n, p.Tag); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (p *Paragrapher) executeTag(n *html.Node, tagName string) error {
+func inlineNode(n *html.Node) bool {
+	if n.Type != html.ElementNode {
+		return true
+	}
+	switch n.Data {
+	// are we standard HTML inline tags?
+	case "b", "i", "span", "sup", "sub":
+		return true
+	// are we standard HTML block tags
+	case "root", "div", "p", "pre", "blockquote", "article", "section", "table", "img", "figure":
+		return false
+	}
+
+	if n.PrevSibling != nil &&
+		n.PrevSibling.Type == html.TextNode &&
+		strings.HasSuffix(n.PrevSibling.Data, " ") {
+		return true
+	}
+	return false
+}
+
+func (pg *Paragrapher) executeTag(n *html.Node, tagName string) error {
 	blocks := Selector(n, func(n *html.Node) bool {
 		return n.Type == html.ElementNode && n.Data == tagName
 	})
+	// in root, create <p>
+	if tagName == "root" {
+		tagName = "p"
+	}
 	for _, block := range blocks {
 		p := NewElement(tagName)
 		current := block.FirstChild
 		for current != nil {
 			// generate case of <p> having block-level children (e.e. <p> outer <p> inner </p></p>
-			if isBlock(current) {
+			if !pg.IsInline(current) {
 				if p.FirstChild != nil {
-					block.Parent.InsertBefore(p, block)
+					if block.Parent != nil {
+						block.Parent.InsertBefore(p, block)
+					} else {
+						block.InsertBefore(p, current)
+					}
 					p = NewElement(tagName)
 				}
 				next := current.NextSibling
-				block.RemoveChild(current)
-				block.Parent.InsertBefore(current, block)
+				if block.Parent != nil {
+					block.RemoveChild(current)
+					block.Parent.InsertBefore(current, block)
+				}
 				current = next
 				continue
 			}
@@ -119,15 +137,25 @@ func (p *Paragrapher) executeTag(n *html.Node, tagName string) error {
 			}
 			// dont add empty <p></p>
 			if p.FirstChild != nil {
-				block.Parent.InsertBefore(p, block)
+				if block.Parent != nil {
+					block.Parent.InsertBefore(p, block)
+				} else {
+					block.InsertBefore(p, current)
+				}
 				p = NewElement(tagName)
 			}
 		}
 
 		if p.FirstChild != nil {
-			block.Parent.InsertBefore(p, block)
+			if block.Parent != nil {
+				block.Parent.InsertBefore(p, block)
+			} else {
+				block.InsertBefore(p, current)
+			}
 		}
-		block.Parent.RemoveChild(block)
+		if block.Parent != nil {
+			block.Parent.RemoveChild(block)
+		}
 	}
 	return nil
 }
