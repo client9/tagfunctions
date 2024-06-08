@@ -1,6 +1,7 @@
 package tagfunctions
 
 import (
+	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -64,17 +65,45 @@ func inlineNode(n *html.Node) bool {
 	}
 	switch n.Data {
 	// are we standard HTML inline tags?
-	case "b", "i", "span", "sup", "sub":
+	case "b", "em", "i", "span", "sup", "sub":
 		return true
-	// are we standard HTML block tags
-	case "root", "div", "p", "pre", "blockquote", "article", "section", "table", "img", "figure":
+	// are we standard HTML block tags?
+	case "hr", "root", "div", "p", "pre", "blockquote", "article", "section", "table", "img", "figure":
 		return false
 	}
 
+	// Are we a tag with no children?
+	if n.FirstChild == nil {
+		return true
+	}
+
+	// Are we a tag with exactly one child that is text node?
+	if n.FirstChild != nil && n.FirstChild.NextSibling == nil && n.FirstChild.Type == html.TextNode {
+		return true
+	}
+
+	// This doesn't work right since the node's prev-sibling has been ripped out
+
+	// if we are preceeded by a space, guess it's an inline.
+	if n.PrevSibling != nil {
+		log.Printf("GOT %v with %q", n.PrevSibling.Type, n.PrevSibling.Data)
+	}
 	if n.PrevSibling != nil &&
 		n.PrevSibling.Type == html.TextNode &&
 		strings.HasSuffix(n.PrevSibling.Data, " ") {
 		return true
+	}
+	return false
+}
+
+func needsSplit(n *html.Node) bool {
+	for child := n.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type != html.TextNode {
+			continue
+		}
+		if strings.Contains(child.Data, "\n\n") {
+			return true
+		}
 	}
 	return false
 }
@@ -88,10 +117,12 @@ func (pg *Paragrapher) executeTag(n *html.Node, tagName string) error {
 	tagName = pg.Create
 
 	for _, block := range blocks {
+
+		// possible we don't need to do all this cut and paste
+
 		p := NewElement(tagName)
 		current := block.FirstChild
 		for current != nil {
-			// generate case of <p> having block-level children (e.e. <p> outer <p> inner </p></p>
 			if !pg.IsInline(current) {
 				if p.FirstChild != nil {
 					if block.Parent != nil {

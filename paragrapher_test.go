@@ -23,6 +23,7 @@ func TestParagraphSplit(t *testing.T) {
 		{"$p{$pre{junk}outer}", "<root><pre>junk</pre><p>outer</p></root>"},
 		{"$p{$pre{junk}\n\n}", "<root><pre>junk</pre></root>"},
 		{"$p{line1$b{bold}\n$pre{junk}\nlast}", "<root><p>line1<b>bold</b>\n</p><pre>junk</pre><p>\nlast</p></root>"},
+		{"$p{before $inline{middle} after}", "<root><p>before <inline>middle</inline> after</p></root>"},
 	}
 	pg := Paragrapher{}
 	for num, tc := range tests {
