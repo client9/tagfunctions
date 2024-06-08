@@ -167,8 +167,8 @@ func (pg *Paragrapher) executeTag(n *html.Node, tagName string) error {
 				continue
 			}
 
-			copyText := strings.TrimSpace(current.Data[:idx])
-			current.Data = strings.TrimSpace(current.Data[idx+2:])
+			copyText := strings.TrimRight(current.Data[:idx], " \n\r\t")
+			current.Data = strings.TrimLeft(current.Data[idx+2:], " \n\r\t")
 
 			// dont make empty text nodes
 			if len(copyText) != 0 {

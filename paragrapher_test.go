@@ -24,6 +24,10 @@ func TestParagraphSplit(t *testing.T) {
 		{"$p{$pre{junk}\n\n}", "<root><pre>junk</pre></root>"},
 		{"$p{line1$b{bold}\n$pre{junk}\nlast}", "<root><p>line1<b>bold</b>\n</p><pre>junk</pre><p>\nlast</p></root>"},
 		{"$p{before $inline{middle} after}", "<root><p>before <inline>middle</inline> after</p></root>"},
+
+		// make sure " after" with leading space is preserved
+		// make sure "next " with trailing space is preserved
+		{"$p{$inline{middle} after\n\nnext $inline{middle}}", "<root><p><inline>middle</inline> after</p><p>next <inline>middle</inline></p></root>"},
 	}
 	pg := Paragrapher{}
 	for num, tc := range tests {
