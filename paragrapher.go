@@ -1,7 +1,6 @@
 package tagfunctions
 
 import (
-	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -83,11 +82,6 @@ func inlineNode(n *html.Node) bool {
 	}
 
 	// This doesn't work right since the node's prev-sibling has been ripped out
-
-	// if we are preceeded by a space, guess it's an inline.
-	if n.PrevSibling != nil {
-		log.Printf("GOT %v with %q", n.PrevSibling.Type, n.PrevSibling.Data)
-	}
 	if n.PrevSibling != nil &&
 		n.PrevSibling.Type == html.TextNode &&
 		strings.HasSuffix(n.PrevSibling.Data, " ") {
