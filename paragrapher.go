@@ -27,6 +27,7 @@ import (
 
 type Paragrapher struct {
 	Tag      string // elements to split on "\n\n" to generate new blocks
+	Create   string // element to make
 	IsInline func(*html.Node) bool
 }
 
@@ -38,6 +39,14 @@ func (p *Paragrapher) Execute(n *html.Node) error {
 	if p.Tag == "" {
 		p.Tag = "p"
 	}
+	if p.Create == "" {
+		if p.Tag == "root" {
+			p.Create = "p"
+		} else {
+			p.Create = p.Tag
+		}
+	}
+
 	if p.IsInline == nil {
 		p.IsInline = inlineNode
 	}
@@ -74,10 +83,10 @@ func (pg *Paragrapher) executeTag(n *html.Node, tagName string) error {
 	blocks := Selector(n, func(n *html.Node) bool {
 		return n.Type == html.ElementNode && n.Data == tagName
 	})
-	// in root, create <p>
-	if tagName == "root" {
-		tagName = "p"
-	}
+
+	//
+	tagName = pg.Create
+
 	for _, block := range blocks {
 		p := NewElement(tagName)
 		current := block.FirstChild
