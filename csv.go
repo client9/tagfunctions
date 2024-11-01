@@ -24,13 +24,7 @@ func encodeForCSV(s string) string {
 
 func CsvEscape(n *html.Node) error {
 
-	raw := ""
-	for child := n.FirstChild; child != nil; child = child.NextSibling {
-		if child.Type != html.TextNode {
-			continue
-		}
-		raw += child.Data
-	}
+	raw := TextContent(n)
 	RemoveChildren(n)
 	n.Type = html.TextNode
 	n.Data = encodeForCSV(raw)
