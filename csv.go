@@ -7,6 +7,37 @@ import (
 	"golang.org/x/net/html"
 )
 
+// encodeForCSV takes a string and encodes it for safe embedding in a CSV file.
+func encodeForCSV(s string) string {
+	// Check if the string contains special characters
+	if strings.ContainsAny(s, ",\"\n") {
+		// Escape any double quotes by doubling them
+		s = strings.ReplaceAll(s, `"`, `""`)
+		// Surround the string with double quotes
+		return `"` + s + `"`
+	}
+	// Return the string as-is if no special characters
+	return s
+}
+
+func CsvEscape(n *html.Node) error {
+
+	raw := ""
+	for child := n.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type != html.TextNode {
+			continue
+		}
+		raw += child.Data
+	}
+	RemoveChildren(n)
+	n.Type = html.TextNode
+	n.Data = encodeForCSV(raw)
+	n.DataAtom = 0
+	n.Attr = nil
+	return nil
+
+}
+
 // NewCsvTableHTML takes an embedded CSV and converts to an HTML table.
 //
 // The table's tags have optional class attributes using the formatter function.
