@@ -103,9 +103,8 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 				break
 			}
 			if err != nil {
-				return err
 				log.Printf("row %v: table logger: %v", row, err)
-				break
+				return err
 			}
 			tr = makeTableTag("tr", i, 0)
 			tbody.AppendChild(tr)
