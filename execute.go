@@ -2,6 +2,7 @@ package tagfunctions
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -222,7 +223,12 @@ func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 			}
 		}
 		if fn, ok := fmap[n.Data]; ok {
-			return fn(n)
+			err := fn(n)
+			if err != nil {
+				log.Printf("Got error in node %s: %v", n.Data, err)
+			}
+			return err
+			//return fn(n)
 		}
 		//
 	default:
