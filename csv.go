@@ -2,6 +2,8 @@ package tagfunctions
 
 import (
 	"encoding/csv"
+	"io"
+	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -97,7 +99,11 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 		for {
 			i += 1
 			row, err := r.Read()
+			if err == io.EOF {
+				break
+			}
 			if err != nil {
+				log.Printf("table logger: %v", err)
 				break
 			}
 			tr = makeTableTag("tr", i, 0)
