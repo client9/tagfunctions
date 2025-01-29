@@ -63,11 +63,14 @@ func inlineNode(n *html.Node) bool {
 		return true
 	}
 	switch n.Data {
+
 	// are we standard HTML inline tags?
-	case "b", "em", "i", "span", "sup", "sub":
+	case "a", "b", "em", "i", "span", "sup", "sub", "small", "code", "addr", "strong", "var", "label", "cite", "tt", "kbd", "time", "br", "big", "acronym":
 		return true
+
 	// are we standard HTML block tags?
-	case "hr", "root", "div", "p", "pre", "blockquote", "article", "section", "table", "img", "figure":
+	case "hr", "root", "div", "p", "pre", "blockquote", "article", "section", "table", "img", "figure", "h1", "h2", "h3", "h4", "h5", "h6":
+
 		return false
 	}
 
@@ -77,16 +80,11 @@ func inlineNode(n *html.Node) bool {
 	}
 
 	// Are we a tag with exactly one child that is text node?
+	// Then assume it's inline
 	if n.FirstChild != nil && n.FirstChild.NextSibling == nil && n.FirstChild.Type == html.TextNode {
 		return true
 	}
 
-	// This doesn't work right since the node's prev-sibling has been ripped out
-	if n.PrevSibling != nil &&
-		n.PrevSibling.Type == html.TextNode &&
-		strings.HasSuffix(n.PrevSibling.Data, " ") {
-		return true
-	}
 	return false
 }
 
