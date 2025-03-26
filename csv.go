@@ -34,6 +34,11 @@ func CsvEscape(n *html.Node) error {
 
 }
 
+func CsvTable(n *html.Node, formatter func(string, int, int) string) error {
+	fn := NewCsvTableHTML(formatter)
+	return fn(n)
+}
+
 // NewCsvTableHTML takes an embedded CSV and converts to an HTML table.
 //
 // The table's tags have optional class attributes using the formatter function.
@@ -61,7 +66,23 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 	}
 
 	return func(n *html.Node) error {
-		body := n.FirstChild.Data
+		// capture raw table body
+		sb := strings.Builder{}
+
+		// We just want children of n
+		//
+		// Render on "n" will return "$csvtable[...]{ ... }"
+		// you could probably extract a slice to get stuff between first "{"
+		// and last "}".. just looping seems safest.
+
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			Render(&sb, c)
+		}
+		body := sb.String()
+		log.Printf("BODY = %s", body)
+
+		// zap out the children to get rid of memory leaks
+		RemoveChildren(n)
 
 		table := makeTableTag("table", 0, 0)
 		r := csv.NewReader(strings.NewReader(body))
