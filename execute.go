@@ -11,6 +11,9 @@ import (
 
 // Execute parses and renders a tag string
 func Generate(src string, fmap map[string]NodeFunc) (string, error) {
+	if fmap == nil {
+		fmap = make(map[string]NodeFunc)
+	}
 	t := Tokenizer{}
 	n := t.Parse(strings.NewReader(src))
 	if err := Execute(n, fmap); err != nil {
@@ -18,6 +21,22 @@ func Generate(src string, fmap map[string]NodeFunc) (string, error) {
 	}
 	s := &strings.Builder{}
 	if err := Render(s, n); err != nil {
+		return "", err
+	}
+	return s.String(), nil
+}
+
+func GenerateHTML(src string, fmap map[string]NodeFunc) (string, error) {
+	if fmap == nil {
+		fmap = make(map[string]NodeFunc)
+	}
+	t := Tokenizer{}
+	n := t.Parse(strings.NewReader(src))
+	if err := Execute(n, fmap); err != nil {
+		return "", err
+	}
+	s := &strings.Builder{}
+	if err := RenderHTML(s, n); err != nil {
 		return "", err
 	}
 	return s.String(), nil
