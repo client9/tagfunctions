@@ -85,7 +85,7 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 		for j, col := range row {
 			th := makeTableTag("th", i, j)
 			th.AppendChild(NewText(col))
-			thead.AppendChild(th)
+			tr.AppendChild(th)
 		}
 		tbody := makeTableTag("tbody", 0, 0)
 		table.AppendChild(tbody)
