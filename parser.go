@@ -38,13 +38,19 @@ func (z *Tokenizer) unreadByte() {
 	}
 }
 
+// Parse input into new root Node
 func (z *Tokenizer) Parse(r io.ByteScanner) *html.Node {
-	z.maybeText = nil
-	z.r = r
 	root := &html.Node{
 		Type: html.ElementNode,
 		Data: "root",
 	}
+	return z.ParseChildren(r, root)
+}
+
+// Parse input as children to given Node
+func (z *Tokenizer) ParseChildren(r io.ByteScanner, root *html.Node) *html.Node {
+	z.maybeText = nil
+	z.r = r
 	z.current = root
 	z.stateText()
 	return root
