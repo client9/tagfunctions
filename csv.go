@@ -61,6 +61,12 @@ func CsvTable(n *html.Node, formatter func(string, int, int) string) error {
 // fn("wrap", 0, 0)
 //
 // if non-empty will wrap the table in a <div class="xxx">
+//
+// The native GoLang CSV Reader is too strict.
+// Can parse `"foo"`
+// Can not parse `foo "bar"`
+// It appears quoting must be at the start
+// TODO: rewrite our own.
 func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 	if formatter == nil {
 		formatter = func(string, int, int) string { return "" }
@@ -74,6 +80,9 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 	}
 
 	return func(n *html.Node) error {
+		// for reparsing table cells
+		p := Tokenizer{}
+
 		// capture raw table body
 		sb := strings.Builder{}
 
@@ -87,7 +96,6 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 			Render(&sb, c)
 		}
 		body := sb.String()
-
 		// zap out the children to get rid of memory leaks
 		RemoveChildren(n)
 
@@ -112,7 +120,8 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 		thead.AppendChild(tr)
 		for j, col := range row {
 			th := makeTableTag("th", i, j)
-			th.AppendChild(NewText(col))
+			p.ParseChildren(strings.NewReader(col), th)
+			//th.AppendChild(NewText(col))
 			tr.AppendChild(th)
 		}
 		tbody := makeTableTag("tbody", 0, 0)
@@ -125,14 +134,15 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 				break
 			}
 			if err != nil {
-				log.Printf("row %v: table logger: %v", row, err)
+				log.Printf("csvtable: row %v: table logger: %v", row, err)
 				return err
 			}
 			tr = makeTableTag("tr", i, 0)
 			tbody.AppendChild(tr)
 			for j, col := range row {
 				td := makeTableTag("td", i, j)
-				td.AppendChild(NewText(col))
+				p.ParseChildren(strings.NewReader(col), td)
+				//td.AppendChild(NewText(col))
 				tr.AppendChild(td)
 			}
 		}
