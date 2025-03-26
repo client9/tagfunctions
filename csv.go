@@ -35,8 +35,16 @@ func CsvEscape(n *html.Node) error {
 }
 
 func CsvTable(n *html.Node, formatter func(string, int, int) string) error {
+	blocks := Selector(n, func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.Data == "csvtable"
+	})
 	fn := NewCsvTableHTML(formatter)
-	return fn(n)
+	for _, block := range blocks {
+		if err := fn(block); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // NewCsvTableHTML takes an embedded CSV and converts to an HTML table.
