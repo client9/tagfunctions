@@ -79,7 +79,6 @@ func NewCsvTableHTML(formatter func(string, int, int) string) NodeFunc {
 			Render(&sb, c)
 		}
 		body := sb.String()
-		log.Printf("BODY = %s", body)
 
 		// zap out the children to get rid of memory leaks
 		RemoveChildren(n)
