@@ -2,6 +2,7 @@ package tagfunctions
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -10,13 +11,13 @@ import (
 	"golang.org/x/net/html"
 )
 
-func RenderStringFunc(render func(io.Writer, *html.Node) error) func(n *html.Node) (string, error) {
-	return func(n *html.Node) (string, error) {
-		buf := &strings.Builder{}
+func RenderStringFunc(render func(io.Writer, *html.Node) error) func(n *html.Node) ([]byte, error) {
+	return func(n *html.Node) ([]byte, error) {
+		buf := &bytes.Buffer{}
 		if err := render(buf, n); err != nil {
-			return "", err
+			return nil, err
 		}
-		return buf.String(), nil
+		return buf.Bytes(), nil
 	}
 }
 
