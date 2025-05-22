@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+// tests identity  orig -> parse -> render -> orig
+// and HTML variation
 func TestRender(t *testing.T) {
 	type test struct {
 		input string
