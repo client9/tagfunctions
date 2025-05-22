@@ -23,7 +23,7 @@ func Entity(n *html.Node) error {
 			return fmt.Errorf("Got unknown entity %q", ent)
 		}
 	}
-	// ok seems saw, let convert this to a raw node.
+	// ok seems raw, let convert this to a raw node.
 	n.Type = html.RawNode
 	n.Attr = nil
 	n.DataAtom = 0
