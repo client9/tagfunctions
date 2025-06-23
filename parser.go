@@ -1,6 +1,7 @@
 package tagfunctions
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -39,7 +40,7 @@ func (z *Tokenizer) unreadByte() {
 }
 
 // Parse input into new root Node
-func (z *Tokenizer) Parse(r io.ByteScanner) *html.Node {
+func (z *Tokenizer) Parse(r io.Reader) *html.Node {
 	root := &html.Node{
 		Type: html.ElementNode,
 		Data: "root",
@@ -48,7 +49,12 @@ func (z *Tokenizer) Parse(r io.ByteScanner) *html.Node {
 }
 
 // Parse input as children to given Node
-func (z *Tokenizer) ParseChildren(r io.ByteScanner, root *html.Node) *html.Node {
+func (z *Tokenizer) ParseChildren(src io.Reader, root *html.Node) *html.Node {
+	var ok bool
+	var r io.ByteScanner
+	if r, ok = src.(io.ByteScanner); !ok {
+		r = bufio.NewReader(src)
+	}
 	z.maybeText = nil
 	z.r = r
 	z.current = root
