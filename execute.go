@@ -244,10 +244,9 @@ func Execute(n *html.Node, fmap map[string]NodeFunc) error {
 		if fn, ok := fmap[n.Data]; ok {
 			err := fn(n)
 			if err != nil {
-				log.Printf("Got error in node %s: %v", n.Data, err)
+				return fmt.Errorf("Got error in node %s: %v", n.Data, err)
 			}
 			return err
-			//return fn(n)
 		}
 		//
 	default:
