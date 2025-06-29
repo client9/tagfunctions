@@ -2,7 +2,6 @@ package tagfunctions
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"golang.org/x/net/html"
